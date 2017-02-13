@@ -159,6 +159,81 @@ public:
     return inbyte;
   }
 
+  template<typename Func>
+  const uint32_t *mapArray(const uint32_t *in, const size_t length,
+    uint32_t *out, size_t &nvalue, Func f, size_t index) {
+    decodeFromByteArray((const uint8_t *)in, length * sizeof(uint32_t), out,
+      nvalue);
+    return in + length;
+  }
+
+  template<typename Func>
+  const uint8_t *mapFromByteArray(const uint8_t *inbyte, const size_t length,
+    uint32_t *out, size_t &nvalue, Func f, size_t index) {
+    if (length == 0) {
+      nvalue = 0;
+      return inbyte; // abort
+    }
+    const uint8_t *const endbyte = inbyte + length;
+    const size_t initindex(index);
+    // this assumes that there is a value to be read
+
+    while (endbyte > inbyte + 5) {
+      uint8_t c;
+      uint32_t v;
+
+      c = inbyte[0];
+      v = c & 0x7F;
+      if (c >= 128) {
+        inbyte += 1;
+        f(v, index++);
+        continue;
+      }
+
+      c = inbyte[1];
+      v |= (c & 0x7F) << 7;
+      if (c >= 128) {
+        inbyte += 2;
+        f(v, index++);
+        continue;
+      }
+
+      c = inbyte[2];
+      v |= (c & 0x7F) << 14;
+      if (c >= 128) {
+        inbyte += 3;
+        f(v, index++);
+        continue;
+      }
+
+      c = inbyte[3];
+      v |= (c & 0x7F) << 21;
+      if (c >= 128) {
+        inbyte += 4;
+        f(v, index++);
+        continue;
+      }
+
+      c = inbyte[4];
+      inbyte += 5;
+      v |= (c & 0x0F) << 28;
+      f(v, index++);
+    }
+    while (endbyte > inbyte) {
+      unsigned int shift = 0;
+      for (uint32_t v = 0; endbyte > inbyte; shift += 7) {
+        uint8_t c = *inbyte++;
+        v += ((c & 127) << shift);
+        if ((c & 128)) {
+          f(v, index++);
+          break;
+        }
+      }
+    }
+    nvalue = index - initindex;
+    return inbyte;
+  }
+
   std::string name() const { return "VariableByte"; }
 };
 

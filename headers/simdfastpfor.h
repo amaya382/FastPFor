@@ -176,6 +176,30 @@ public:
     return in;
   }
 
+  template<typename Func>
+  const uint32_t *mapArray(const uint32_t *in, const size_t length,
+  uint32_t *out, size_t &nvalue, Func f) {
+    const size_t mynvalue = *in;
+    ++in;
+    if (mynvalue > nvalue)
+      throw NotEnoughStorage(mynvalue);
+    nvalue = mynvalue;
+    size_t index = 0;
+    const uint32_t *const finalout(nvalue);
+    while (index != finalout) {
+      size_t thisnvalue(0);
+      size_t thissize = static_cast<size_t>(
+        finalout > PageSize + out ? PageSize : (finalout - out));
+
+      __decodeArray(in, thisnvalue, out, thissize, f, index);
+      in += thisnvalue;
+      index += thissize;
+    }
+    assert(initin + length >= in);
+    resetBuffer(); // if you don't do this, the codec has a "memory".
+    return in;
+  }
+
   /**
    * If you save the output and recover it in memory, you are
    * responsible to ensure that the alignment is preserved.
@@ -337,6 +361,60 @@ public:
             out[pos] |= (*(exceptionsptr++)) << b;
           }
         }
+      }
+    }
+    assert(in == headerin + wheremeta);
+  }
+
+  template<typename Func>
+  void __mapArray(const uint32_t *in, size_t &length, uint32_t *out,
+    const size_t nvalue, Func f, size_t index) {
+    const uint32_t *const initin = in;
+    const uint32_t *const headerin = in++;
+    const uint32_t wheremeta = headerin[0];
+    const uint32_t *inexcept = headerin + wheremeta;
+    const uint32_t bytesize = *inexcept++;
+    const uint8_t *bytep = reinterpret_cast<const uint8_t *>(inexcept);
+    inexcept += (bytesize + sizeof(uint32_t) - 1) / sizeof(uint32_t);
+    const uint32_t bitmap = *(inexcept++);
+    for (uint32_t k = 2; k <= 32; ++k) {
+      if ((bitmap & (1U << (k - 1))) != 0) {
+        inexcept = unpackmesimd(inexcept, datatobepacked[k], k);
+      }
+    }
+    length = inexcept - initin;
+    std::vector<uint32_t, cacheallocator>::const_iterator
+      unpackpointers[32 + 1];
+    for (uint32_t k = 1; k <= 32; ++k) {
+      unpackpointers[k] = datatobepacked[k].begin();
+    }
+    in = padTo128bits(in);
+    assert(!needPaddingTo128Bits(out));
+    for (uint32_t run = 0; run < nvalue / BlockSize; ++run, index += BlockSize) {
+      const uint8_t b = *bytep++;
+      const uint8_t cexcept = *bytep++;
+      in = unpackblocksimd(in, out, b);
+      if (cexcept > 0) {
+        const uint8_t maxbits = *bytep++;
+        if (maxbits - b == 1) {
+          for (uint32_t k = 0; k < cexcept; ++k) {
+            const uint8_t pos = *(bytep++);
+            out[index + pos] |= static_cast<uint32_t>(1) << b;
+          }
+        }
+        else {
+          std::vector<uint32_t, cacheallocator>::const_iterator &exceptionsptr =
+            unpackpointers[maxbits - b];
+          for (uint32_t k = 0; k < cexcept; ++k) {
+            const uint8_t pos = *(bytep++);
+            out[index + pos] |= (*(exceptionsptr++)) << b;
+          }
+        }
+      }
+
+      // TODO
+      for (auto i = index, j = index + BlockSize; i < j; i++) {
+        f(out[i], i);
       }
     }
     assert(in == headerin + wheremeta);
