@@ -179,17 +179,17 @@ public:
   template<typename Func>
   const uint32_t *mapArray(const uint32_t *in, const size_t length,
   uint32_t *out, size_t &nvalue, Func f) {
+    const uint32_t *const initin(in);
     const size_t mynvalue = *in;
     ++in;
     if (mynvalue > nvalue)
       throw NotEnoughStorage(mynvalue);
     nvalue = mynvalue;
     size_t index = 0;
-    const uint32_t *const finalout(nvalue);
-    while (index != finalout) {
+    while (index != nvalue) {
       size_t thisnvalue(0);
       size_t thissize = static_cast<size_t>(
-        finalout > PageSize + out ? PageSize : (finalout - out));
+        nvalue > PageSize + index ? PageSize : (nvalue - index));
 
       __decodeArray(in, thisnvalue, out, thissize, f, index);
       in += thisnvalue;

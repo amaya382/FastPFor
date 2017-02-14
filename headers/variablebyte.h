@@ -163,7 +163,7 @@ public:
   const uint32_t *mapArray(const uint32_t *in, const size_t length,
     uint32_t *out, size_t &nvalue, Func f, size_t index) {
     mapFromByteArray((const uint8_t *)in, length * sizeof(uint32_t), out,
-      nvalue, index);
+      nvalue, f, index);
     return in + length;
   }
 

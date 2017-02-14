@@ -63,6 +63,7 @@ public:
   template<typename Func>
   const uint32_t *mapArray(const uint32_t *in, const size_t length,
     uint32_t *out, size_t &nvalue, Func f) {
+    const uint32_t *const initin(in);
     size_t mynvalue1 = nvalue;
     size_t index = 0;
     const uint32_t *in2 = codec1.mapArray(in, length, out, mynvalue1, f, index);
