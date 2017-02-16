@@ -124,9 +124,9 @@ add_library(FastPFor STATIC src/bitpacking.cpp
 #target_link_libraries(entropy FastPFor)
 
 #if( SUPPORT_SSE42 )
-#  add_executable(benchbitpacking src/benchbitpacking.cpp)
+#    add_executable(benchbitpacking src/benchbitpacking.cpp)
 #    target_link_libraries(benchbitpacking FastPFor)
-#   endif()
+#endif()
 
 find_package(snappy)
 if(NOT ${snappy_FOUND})
