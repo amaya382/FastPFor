@@ -179,7 +179,9 @@ public:
   template<typename Func>
   const uint32_t *mapArray(const uint32_t *in, const size_t length,
   uint32_t *out, size_t &nvalue, Func f) {
+#ifndef NDEBUG
     const uint32_t *const initin(in);
+#endif
     const size_t mynvalue = *in;
     ++in;
     if (mynvalue > nvalue)
@@ -191,7 +193,7 @@ public:
       size_t thissize = static_cast<size_t>(
         nvalue > PageSize + index ? PageSize : (nvalue - index));
 
-      __decodeArray(in, thisnvalue, out, thissize, f, index);
+      __mapArray(in, thisnvalue, out, thissize, f, index);
       in += thisnvalue;
       index += thissize;
     }
@@ -369,6 +371,7 @@ public:
   template<typename Func>
   void __mapArray(const uint32_t *in, size_t &length, uint32_t *out,
     const size_t nvalue, Func f, size_t index) {
+    // TODO: out
     const uint32_t *const initin = in;
     const uint32_t *const headerin = in++;
     const uint32_t wheremeta = headerin[0];
@@ -390,7 +393,7 @@ public:
     }
     in = padTo128bits(in);
     assert(!needPaddingTo128Bits(out));
-    for (uint32_t run = 0; run < nvalue / BlockSize; ++run, index += BlockSize) {
+    for (uint32_t run = 0; run < nvalue / BlockSize; ++run) {
       const uint8_t b = *bytep++;
       const uint8_t cexcept = *bytep++;
       in = unpackblocksimd(in, out, b);
@@ -399,7 +402,7 @@ public:
         if (maxbits - b == 1) {
           for (uint32_t k = 0; k < cexcept; ++k) {
             const uint8_t pos = *(bytep++);
-            out[index + pos] |= static_cast<uint32_t>(1) << b;
+            out[pos] |= static_cast<uint32_t>(1) << b;
           }
         }
         else {
@@ -407,14 +410,14 @@ public:
             unpackpointers[maxbits - b];
           for (uint32_t k = 0; k < cexcept; ++k) {
             const uint8_t pos = *(bytep++);
-            out[index + pos] |= (*(exceptionsptr++)) << b;
+            out[pos] |= (*(exceptionsptr++)) << b;
           }
         }
       }
 
       // TODO
-      for (auto i = index, j = index + BlockSize; i < j; i++) {
-        f(out[i], i);
+      for (auto i = 0ul; i < BlockSize; i++) {
+        f(out[i], i + index);
       }
     }
     assert(in == headerin + wheremeta);
