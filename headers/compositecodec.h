@@ -39,6 +39,19 @@ public:
       nvalue = nvalue1;
     }
   }
+
+  size_t estimate(const uint32_t *in, const size_t length) {
+    const size_t roundedlength = length / Codec1::BlockSize * Codec1::BlockSize;
+    size_t nvalue = codec1.estimate(in, roundedlength);
+
+    if (roundedlength < length) {
+      nvalue += codec2.estimate(in + roundedlength, length - roundedlength);
+    }
+
+    // return #4bytes
+    return nvalue;
+  }
+
   const uint32_t *decodeArray(const uint32_t *in, const size_t length,
                               uint32_t *out, size_t &nvalue) {
 #ifndef NDEBUG

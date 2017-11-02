@@ -243,6 +243,20 @@ public:
     resetBuffer(); // if you don't do this, the buffer has a memory
   }
 
+  size_t estimate(const uint32_t *in, const size_t length) {
+    const uint32_t *const finalin(in + length);
+    size_t nvalue = 1;
+    while (in != finalin) {
+      size_t thissize = static_cast<size_t>(
+          finalin > PageSize + in ? PageSize : (finalin - in));
+      nvalue += _estimate(in, thissize);
+      in += thissize;
+    }
+
+    // return #4bytes
+    return nvalue;
+  }
+
   void getBestBFromData(const uint32_t *in, uint8_t &bestb,
                         uint8_t &bestcexcept, uint8_t &maxb) {
     uint32_t freqs[33];
@@ -319,6 +333,48 @@ public:
         out = packmeupwithoutmasksimd(datatobepacked[k], out, k);
     }
     nvalue = out - initout;
+  }
+
+  size_t _estimate(const uint32_t *in, const size_t length) {
+    size_t nvalue = 3;
+    std::vector<uint32_t, cacheallocator> datatobepackedcount(32);
+    size_t bytescontainersize = 0;
+    for (const uint32_t *const final = in + length; (in + BlockSize <= final);
+         in += BlockSize) {
+      uint8_t bestb, bestcexcept, maxb;
+      getBestBFromData(in, bestb, bestcexcept, maxb);
+      bytescontainersize += 2;
+      if (bestcexcept > 0) {
+        bytescontainersize++;
+        const uint32_t maxval = 1U << bestb;
+        for (uint32_t k = 0; k < BlockSize; ++k) {
+          if (in[k] >= maxval) {
+            // we have an exception
+            datatobepackedcount[maxb - bestb]++;
+            bytescontainersize++;
+          }
+        }
+      }
+      nvalue += 4 * bestb * BlockSize;
+    }
+    nvalue += (bytescontainersize + 3) / 4;
+    for (uint32_t k = 2; k <= 32; ++k) {
+      auto size = datatobepacked[k].size();
+      if (size > 0) {
+        nvalue++;
+        uint32_t j = 0;
+        for (; j + 128 <= size; j += 128) {
+          nvalue += 4 * k;
+        }
+        for (; j < size; j += 32) {
+          nvalue += k;
+        }
+        nvalue -= (j - size) * k / 32;
+      }
+    }
+
+    // return #4bytes
+    return nvalue;
   }
 
   void __decodeArray(const uint32_t *in, size_t &length, uint32_t *out,

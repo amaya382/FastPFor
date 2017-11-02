@@ -86,6 +86,36 @@ public:
     nvalue = bout - initbout;
   }
 
+  size_t estimate(const uint32_t *in, const size_t length) {
+    auto nvalue = (_estimate(in, length) + 3) / 4; // #bytes to #4bytes (w/ ceiling)
+
+    // return #4bytes
+    return nvalue;
+  }
+
+  size_t _estimate(const uint32_t *in, const size_t length) {
+    size_t nvalue = 0;
+
+    for (size_t k = 0; k < length; ++k) {
+      const uint32_t val = in[k];
+
+      if (val < (1U << 7)) {
+        nvalue++;
+      } else if (val < (1U << 14)) {
+        nvalue += 2;
+      } else if (val < (1U << 21)) {
+        nvalue += 3;
+      } else if (val < (1U << 28)) {
+        nvalue += 4;
+      } else {
+        nvalue += 5;
+      }
+    }
+
+    // return #bytes
+    return nvalue;
+  }
+
   const uint32_t *decodeArray(const uint32_t *in, const size_t length,
                               uint32_t *out, size_t &nvalue) {
     return reinterpret_cast<const uint32_t *>(decodeFromByteArray((const uint8_t *)in,
