@@ -197,7 +197,8 @@ public:
       v = c & 0x7F;
       if (c >= 128) {
         inbyte += 1;
-        f(v, index++);
+        //f(v, index++);
+        *out++ = v;
         continue;
       }
 
@@ -205,7 +206,8 @@ public:
       v |= (c & 0x7F) << 7;
       if (c >= 128) {
         inbyte += 2;
-        f(v, index++);
+        //f(v, index++);
+        *out++ = v;
         continue;
       }
 
@@ -213,7 +215,8 @@ public:
       v |= (c & 0x7F) << 14;
       if (c >= 128) {
         inbyte += 3;
-        f(v, index++);
+        //f(v, index++);
+        *out++ = v;
         continue;
       }
 
@@ -221,14 +224,16 @@ public:
       v |= (c & 0x7F) << 21;
       if (c >= 128) {
         inbyte += 4;
-        f(v, index++);
+        //f(v, index++);
+        *out++ = v;
         continue;
       }
 
       c = inbyte[4];
       inbyte += 5;
       v |= (c & 0x0F) << 28;
-      f(v, index++);
+      //f(v, index++);
+      *out++ = v;
     }
 
     return inbyte;

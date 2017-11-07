@@ -424,6 +424,7 @@ public:
     assert(in == headerin + wheremeta);
   }
 
+  // FIXME: temporarily NOT mapping, just naive encoding
   template<typename Func>
   void __mapArray(const uint32_t *in, size_t &length, uint32_t *out,
     const size_t nvalue, Func f, size_t index) {
@@ -449,7 +450,8 @@ public:
     }
     in = padTo128bits(in);
     assert(!needPaddingTo128Bits(out));
-    for (uint32_t run = 0; run < nvalue / BlockSize; ++run) {
+    //for (uint32_t run = 0; run < nvalue / BlockSize; ++run) {
+    for (uint32_t run = 0; run < nvalue / BlockSize; ++run, out += BlockSize) {
       const uint8_t b = *bytep++;
       const uint8_t cexcept = *bytep++;
       in = unpackblocksimd(in, out, b);
@@ -471,10 +473,10 @@ public:
         }
       }
 
-      // TODO
-      for (auto i = 0ul; i < BlockSize; i++) {
-        f(out[i], i + index);
-      }
+      // FIXME
+      //for (auto i = 0ul; i < BlockSize; i++) {
+      //  f(out[i], i + index);
+      //}
     }
     assert(in == headerin + wheremeta);
   }

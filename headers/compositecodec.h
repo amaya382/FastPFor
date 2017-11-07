@@ -59,17 +59,17 @@ public:
 #endif
     size_t mynvalue1 = nvalue;
     const uint32_t *in2 = codec1.decodeArray(in, length, out, mynvalue1);
-    if (length + in > in2) {
-      assert(nvalue > mynvalue1);
+    if (nvalue > mynvalue1 /*nvalue as exactly length of out*/) {
+      //assert(nvalue > mynvalue1);
       size_t nvalue2 = nvalue - mynvalue1;
       const uint32_t *in3 = codec2.decodeArray(in2, length - (in2 - in),
                                                out + mynvalue1, nvalue2);
       nvalue = mynvalue1 + nvalue2;
-      assert(initin + length >= in3);
+      //assert(initin + length >= in3);
       return in3;
     }
     nvalue = mynvalue1;
-    assert(initin + length >= in2);
+    //assert(initin + length >= in2);
     return in2;
   }
 
@@ -82,18 +82,18 @@ public:
     size_t mynvalue1 = nvalue;
     size_t index = 0;
     const uint32_t *in2 = codec1.mapArray(in, length, out, mynvalue1, f);
-    if (length + in > in2) {
-      assert(nvalue > mynvalue1);
+    if (nvalue > mynvalue1 /*nvalue as exactly length of out*/) {
+      //assert(nvalue > mynvalue1);
       index = mynvalue1;
       size_t nvalue2 = nvalue - mynvalue1;
       const uint32_t *in3 = codec2.mapArray(in2, length - (in2 - in),
         out + mynvalue1, nvalue2, f, index);
       nvalue = mynvalue1 + nvalue2;
-      assert(initin + length >= in3);
+      //assert(initin + length >= in3);
       return in3;
     }
     nvalue = mynvalue1;
-    assert(initin + length >= in2);
+    //assert(initin + length >= in2);
     return in2;
   }
 
