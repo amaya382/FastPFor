@@ -336,7 +336,7 @@ public:
   }
 
   size_t _estimate(const uint32_t *in, const size_t length) {
-    size_t nvalue = 3;
+    size_t nvalue = 3 + 15; // 15 stands for padding *at most*
     std::vector<uint32_t, cacheallocator> datatobepackedcount(32);
     size_t bytescontainersize = 0;
     for (const uint32_t *const final = in + length; (in + BlockSize <= final);
@@ -355,7 +355,9 @@ public:
           }
         }
       }
-      nvalue += 4 * bestb * BlockSize;
+      for(int k = 0; k < BlockSize; k += 128) {
+        nvalue += 4 * bestb;
+      }
     }
     nvalue += (bytescontainersize + 3) / 4;
     for (uint32_t k = 2; k <= 32; ++k) {
