@@ -97,6 +97,34 @@ public:
     return in2;
   }
 
+  template<typename Func>
+  const uint32_t *mapArray(const uint32_t *in, const size_t length,
+                           uint32_t *out, size_t &nvalue, Func f,
+                           std::vector<uint32_t> &offsets, uint32_t acc_start,
+                           uint32_t end, uint32_t &_k) {
+#ifndef NDEBUG
+    const uint32_t *const initin(in);
+#endif
+    size_t mynvalue1 = nvalue;
+    size_t index = 0;
+    uint32_t start = acc_start;
+    const uint32_t *in2 = codec1.mapArray(in, length, out, mynvalue1, f, offsets, start, end, _k);
+    if (nvalue > mynvalue1 /*nvalue as exactly length of out*/) {
+      //assert(nvalue > mynvalue1);
+      index = mynvalue1;
+      size_t nvalue2 = nvalue - mynvalue1;
+      const uint32_t *in3 = codec2.mapArray(in2, length - (in2 - in),
+                                            out + mynvalue1, nvalue2, f, index,
+                                            offsets, start, end, _k, offsets[acc_start]);
+      nvalue = mynvalue1 + nvalue2;
+      //assert(initin + length >= in3);
+      return in3;
+    }
+    nvalue = mynvalue1;
+    //assert(initin + length >= in2);
+    return in2;
+  }
+
   std::string name() const {
     std::ostringstream convert;
     convert << codec1.name() << "+" << codec2.name();
