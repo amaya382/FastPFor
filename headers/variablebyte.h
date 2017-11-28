@@ -176,83 +176,18 @@ public:
 
   template<typename Func>
   const uint32_t *mapArray(const uint32_t *in, const size_t length,
-    uint32_t *out, size_t &nvalue, Func f, size_t index) {
-    return reinterpret_cast<const uint32_t *>(
-      mapFromByteArray((const uint8_t *)in, length * sizeof(uint32_t), out, nvalue, f, index));
-  }
-
-  template<typename Func>
-  const uint32_t *mapArray(const uint32_t *in, const size_t length,
-                           uint32_t *out, size_t &nvalue, Func f, size_t index,
-                           std::vector<uint32_t> &offsets, uint32_t &start,
+                           size_t &nvalue, Func f, size_t index,
+                           uint32_t *offsets, uint32_t &start,
                            uint32_t end, uint32_t &_k, uint32_t this_offset) {
     return reinterpret_cast<const uint32_t *>(
-        mapFromByteArray((const uint8_t *)in, length * sizeof(uint32_t), out, nvalue,
+        mapFromByteArray((const uint8_t *)in, length * sizeof(uint32_t), nvalue,
                          f, index, offsets, start, end, _k, this_offset));
   }
 
   template<typename Func>
   const uint8_t *mapFromByteArray(const uint8_t *inbyte, const size_t length,
-    uint32_t *out, size_t &nvalue, Func f, size_t index) {
-    if (length == 0) {
-      nvalue = 0;
-      return inbyte; // abort
-    }
-
-    for (auto i = 0ul; i < nvalue; i++) {
-      uint8_t c;
-      uint32_t v;
-
-      c = inbyte[0];
-      v = c & 0x7F;
-      if (c >= 128) {
-        inbyte += 1;
-        //f(v, index++);
-        *out++ = v;
-        continue;
-      }
-
-      c = inbyte[1];
-      v |= (c & 0x7F) << 7;
-      if (c >= 128) {
-        inbyte += 2;
-        //f(v, index++);
-        *out++ = v;
-        continue;
-      }
-
-      c = inbyte[2];
-      v |= (c & 0x7F) << 14;
-      if (c >= 128) {
-        inbyte += 3;
-        //f(v, index++);
-        *out++ = v;
-        continue;
-      }
-
-      c = inbyte[3];
-      v |= (c & 0x7F) << 21;
-      if (c >= 128) {
-        inbyte += 4;
-        //f(v, index++);
-        *out++ = v;
-        continue;
-      }
-
-      c = inbyte[4];
-      inbyte += 5;
-      v |= (c & 0x0F) << 28;
-      //f(v, index++);
-      *out++ = v;
-    }
-
-    return inbyte;
-  }
-
-  template<typename Func>
-  const uint8_t *mapFromByteArray(const uint8_t *inbyte, const size_t length,
-                                  uint32_t *out, size_t &nvalue, Func f, size_t index,
-                                  std::vector<uint32_t> &offsets, uint32_t &start,
+                                  size_t &nvalue, Func f, size_t index,
+                                  uint32_t *offsets, uint32_t &start,
                                   uint32_t end, uint32_t &_k, uint32_t this_offset) {
     if (length == 0) {
       nvalue = 0;
